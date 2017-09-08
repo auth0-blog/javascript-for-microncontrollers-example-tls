@@ -3,6 +3,7 @@
 #include "jerryphoton.h"
 #include "log.h"
 #include "pin.h"
+#include "tls_tcp_client.h"
 #include "delay.h"
 #include "utils.h"
 
@@ -455,7 +456,7 @@ tcp_client_write(const jerry_value_t func,
         jerry_release_value(data);
     }
 
-    return written;
+    return jerry_create_number(written);
 }
 
 static jerry_value_t 
@@ -889,6 +890,32 @@ js& js::instance()  {
         jerry_release_value(func);
     }
 
+    // TLS-enabled TCP client constructor/factory
+    {
+        jerry_value_t func = 
+            jerry_create_external_function(create_tls_tcp_client);    
+        jerry_value_t prop = create_string("TLSTCPClient");
+        
+        jerry_set_property(photon, prop, func);
+        
+        jerry_release_value(prop);
+
+        {
+            jerry_value_t func2 = jerry_create_external_function(
+                tls_tcp_client_add_certificates);    
+            prop = create_string("addCertificates");
+            
+            jerry_set_property(func, prop, func2);
+            
+            jerry_release_value(prop);
+            jerry_release_value(func2);
+        }
+
+        jerry_release_value(func);
+
+        tls_tcp_client_init();
+    }
+
     // TCP server constructor/factory
     {
         jerry_value_t func = jerry_create_external_function(create_tcp_server);    
@@ -993,6 +1020,8 @@ js& js::instance()  {
 }
 
 js::~js()  {
+    tls_tcp_client_deinit();
+
     delete pimpl_;
 
     jerry_cleanup();

@@ -30,7 +30,7 @@ export default {
     babel({
       exclude: 'node_modules/**', // only transpile our source code
       presets: ['es2015-rollup']
-    }),
-    uglify({}, minify)
+    })/*,
+    uglify({}, minify)*/
   ],
 };

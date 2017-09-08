@@ -12,29 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PARTICLE_FIRMWARE := $(CURDIR)/../particle/firmware/modules
+PARTICLE_FIRMWARE := $(CURDIR)/../particle/firmware/main
 
 JERRYDIR ?= $(CURDIR)
-JERRYHEAP  ?= 42
+JERRYHEAP  ?= 16
 
 BUILD_DIR  ?= $(JERRYDIR)/build/particle
+BUILD_DIR_MBED ?= $(JERRYDIR)/build/mbedtls
 
-EXT_CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m4
+EXT_CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m3
 EXT_CFLAGS += -Wno-error=format=
 
 .PHONY: jerrycore jerry-main flash clean
 
 PARTICLE_BUILD_CONFIG = \
-	 INCLUDE_DIRS="$(JERRYDIR)/jerry-core/include $(JERRYDIR)/jerry-ext/include" \
-	 LIBS="jerry-core jerry-ext" \
+	 INCLUDE_DIRS="$(JERRYDIR)/jerry-core/include $(JERRYDIR)/jerry-ext/include $(JERRYDIR)/../mbedtls/include" \
+	 LIBS="mbedcrypto mbedx509 mbedtls jerry-core jerry-ext" \
 	 PLATFORM=photon \
-	 LIB_DIRS=$(BUILD_DIR)/lib \
+	 LIB_DIRS="$(BUILD_DIR)/lib $(BUILD_DIR_MBED)/library" \
 	 APPDIR=$(JERRYDIR)/targets/particle/source \
 	 TARGET_FILE=jerry_main \
 	 TARGET_DIR=$(BUILD_DIR)
 #	 LDFLAGS=--specs=nano.specs
 
-all: jerrycore jerry-main
+all: mbed jerrycore jerry-main
+
+mbed:
+	mkdir -p $(BUILD_DIR)/mbedtls
+	
+	CFLAGS="$(EXT_CFLAGS) -Os" cmake -B$(BUILD_DIR_MBED) -H../mbedtls \
+	 -DENABLE_TESTING=OFF \
+	 -DUSE_SHARED_MBEDTLS_LIBRARY=OFF \
+	 -DUSE_STATIC_MBEDTLS_LIBRARY=ON \
+	 -DENABLE_PROGRAMS=OFF \
+	 -DCMAKE_TOOLCHAIN_FILE=$(JERRYDIR)/cmake/toolchain_external.cmake \
+	 -DEXTERNAL_CMAKE_SYSTEM_PROCESSOR=armv7l \
+	 -DEXTERNAL_CMAKE_C_COMPILER=arm-none-eabi-gcc \
+	 -DEXTERNAL_CMAKE_C_COMPILER_ID=GNU
+
+	make VERBOSE=1 -C$(BUILD_DIR_MBED)
 
 jerrycore:
 	mkdir -p $(BUILD_DIR)
@@ -65,7 +81,7 @@ jerrycore:
 	 -DFEATURE_SNAPSHOT_EXEC=OFF \
 	 -DMEM_HEAP_SIZE_KB=$(JERRYHEAP)
 
-	make -C$(BUILD_DIR) jerry-core jerry-ext
+	make VERBOSE=1 -C$(BUILD_DIR) jerry-core jerry-ext
 
 jerry-main: jerrycore
 	$(PARTICLE_BUILD_CONFIG) make -C$(PARTICLE_FIRMWARE) -f $(PARTICLE_FIRMWARE)/makefile
