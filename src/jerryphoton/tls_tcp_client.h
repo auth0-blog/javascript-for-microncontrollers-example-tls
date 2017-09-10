@@ -81,8 +81,10 @@ struct tls_tcp_client {
 
         //mbedtls_ssl_conf_verify(&conf, verify, NULL);
 
-        mbedtls_ssl_conf_max_version(&conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_2);
-        mbedtls_ssl_conf_min_version(&conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_2);
+        mbedtls_ssl_conf_max_version(&conf, 
+            MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_2);
+        mbedtls_ssl_conf_min_version(&conf,
+            MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_2);
     }
 
     ~tls_tcp_client() {

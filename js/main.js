@@ -1,7 +1,5 @@
 import * as sensors from './sensors.js';
 
-photon.log.trace('test 1');
-
 // Set TLS certificates for CAs. PEM format.
 
 // Webtask.io
@@ -43,10 +41,6 @@ photon.TLSTCPClient.addCertificates(
     '-----END CERTIFICATE-----'
 );
 
-photon.log.trace('test 2');
-
 // Start automatic sensor reports
 sensors.startReports('https://wt-sebastian_peyrott-auth0_com-0.run.webtask.io/iot-sensor-server', 443);
 //sensors.startReports('https://i5-4590-LIN/iot-sensor-server', 8000);
-
-photon.log.trace('test 3');
